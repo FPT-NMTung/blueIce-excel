@@ -49,6 +49,8 @@ public class Main {
             // Calculate height excel
             int heightTable = calculateTotalTableHeightRecursive(sheetConfig, null, sheetConfig.getArrRange(), null, rootLevelDataTable.getDataTables(), 0);
 
+            System.out.println(heightTable);
+
             // Generate file
             System.out.println("Start generate data... ");
             int startRow = new CellAddress(sheetConfig.getArrRange().get(0).getEnd()).getRow() + 1;
@@ -457,6 +459,10 @@ public class Main {
     private static int generateFileFromTemplate(int startRow, Worksheet worksheet, SheetConfig sheetConfig, Range parentRange, List<Range> rangeList, DataTable parentDataTable, List<DataTable> dataTableList, int level) throws Exception {
         int totalAppendRow = 0;
 
+        if (startRow % 1000 == 0) {
+            System.out.println(startRow);
+        }
+
         // loop all dataTable
         for (int indexRangeList = 0; indexRangeList < rangeList.size(); indexRangeList++) {
             Range rangeConfig = rangeList.get(indexRangeList);
@@ -492,16 +498,16 @@ public class Main {
                                 new CellRange(
                                         worksheet,
                                         beginTemplate.getColumn() + 1,
-                                        beginTemplate.getRow() + 1,
+                                        1,
                                         endTemplate.getColumn() + 1,
-                                        endTemplate.getRow() + 1
+                                        20
                                         ),
                                 new CellRange(
                                         worksheet,
                                         beginTemplate.getColumn() + 1,
-                                        startRow + totalAppendRow,
+                                        1,
                                         endTemplate.getColumn() + 1,
-                                        startRow + totalAppendRow + highRow
+                                        20
                                 ),
                                 true
                         );
@@ -533,26 +539,31 @@ public class Main {
                             if (highRow > 0) {
 //                                System.out.println("level: " + level + "    generate top            (" + (beginRowTemplate) + "," + (beginRowChildTemplate - 1) + ") -> " + (startRow + totalAppendRow));
 //                                targetSheet.copyRows(beginRowTemplate, beginRowChildTemplate - 1, startRow + totalAppendRow, new CellCopyPolicy());
+//                                System.out.println("beginRowTemplate + 1: " + (beginRowTemplate + 1));
+//                                System.out.println("startRow + totalAppendRow: " + (startRow + totalAppendRow));
+                                if (startRow + totalAppendRow == 7768) {
+                                    worksheet.getBook().saveToFile("aaaaaaaa.xlsx");
+                                }
                                 worksheet.insertRow(beginRowTemplate + 1, startRow + totalAppendRow);
                                 worksheet.copy(
                                         new CellRange(
                                                 worksheet,
-                                                beginTemplate.getColumn() + 1,
-                                                beginTemplate.getRow() + 1,
-                                                endTemplate.getColumn() + 1,
-                                                endTemplate.getRow() + 1
+                                                1,
+                                                beginRowTemplate + 1,
+                                                20,
+                                                beginRowChildTemplate
                                         ),
                                         new CellRange(
                                                 worksheet,
-                                                beginTemplate.getColumn() + 1,
-                                                startRow + totalAppendRow,
-                                                endTemplate.getColumn() + 1,
-                                                startRow + totalAppendRow + highRow
+                                                1,
+                                                beginRowTemplate + 1 + highRow,
+                                                20,
+                                                beginRowChildTemplate + highRow
                                         ),
                                         true
                                 );
 
-                                worksheet.insertRange(beginRowTemplate + 1, endTemplate.getColumn() + 1, startRow + totalAppendRow, 0, InsertMoveOption.MoveDown, InsertOptionsType.FormatDefault);
+//                                worksheet.insertRange(beginRowTemplate + 1, endTemplate.getColumn() + 1, startRow + totalAppendRow, 0, InsertMoveOption.MoveDown, InsertOptionsType.FormatDefault);
 
                                 totalAppendRow += highRow;
                             }
@@ -561,7 +572,7 @@ public class Main {
 
                         // recursive - generate child row
                         {
-                            int childRowNum = generateFileFromTemplate(startRow + totalAppendRow, targetSheet, sheetConfig, rangeConfig, rangeConfig.getChildRange(), selectedDataTable, selectedRowData.getLevelDataTable().getDataTables(), level + 1);
+                            int childRowNum = generateFileFromTemplate(startRow + totalAppendRow, worksheet, sheetConfig, rangeConfig, rangeConfig.getChildRange(), selectedDataTable, selectedRowData.getLevelDataTable().getDataTables(), level + 1);
 
                             totalAppendRow += childRowNum;
                         }
@@ -569,7 +580,7 @@ public class Main {
                         // generate end last child to end row
                         {
                             int endRowTemplate = new CellAddress(rangeConfig.getEnd()).getRow();
-                            int endRowChildTemplate = new CellAddress(rangeConfig.getChildRange().getLast().getEnd()).getRow();
+                            int endRowChildTemplate = new CellAddress(rangeConfig.getChildRange().get(rangeConfig.getChildRange().size() - 1).getEnd()).getRow();
 
                             int highRow = endRowTemplate - endRowChildTemplate;
 
@@ -577,7 +588,25 @@ public class Main {
 
                             if (highRow > 0) {
 //                                System.out.println("level: " + level + "    generate bottom         (" + (endRowChildTemplate + 1) + "," + (endRowTemplate) + ") -> " + (startRow + totalAppendRow));
-                                targetSheet.copyRows(endRowChildTemplate + 1, endRowTemplate, startRow + totalAppendRow, new CellCopyPolicy());
+//                                targetSheet.copyRows(endRowChildTemplate + 1, endRowTemplate, startRow + totalAppendRow, new CellCopyPolicy());
+                                worksheet.insertRow(endRowChildTemplate + 1, highRow);
+                                worksheet.copy(
+                                        new CellRange(
+                                                worksheet,
+                                                1,
+                                                endRowChildTemplate,
+                                                20,
+                                                endRowTemplate + 1
+                                        ),
+                                        new CellRange(
+                                                worksheet,
+                                                1,
+                                                endRowChildTemplate + highRow,
+                                                20,
+                                                endRowTemplate + 1 + highRow
+                                        ),
+                                        true
+                                );
 
                                 totalAppendRow += highRow;
                             }
